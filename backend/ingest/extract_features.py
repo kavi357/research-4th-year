@@ -18,34 +18,51 @@ def extract_audio_features(y, sr):
     # Chroma
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
 
-    # CREPE pitch
-    y32 = y.astype(np.float32)
+    # ===== FIXED CREPE =====
+    y_crepe = librosa.resample(y, orig_sr=sr, target_sr=16000)
+    max_samples = 16000 * 20
+    if len(y_crepe) > max_samples:
+        y_crepe = y_crepe[:max_samples]
+
+    y_crepe = y_crepe.astype(np.float32)
 
     try:
-        time, frequency, confidence = crepe.predict(
-            y32, sr, step_size=10, viterbi=True, model_capacity='small'
+        time, frequency, confidence, _ = crepe.predict(
+            audio=y_crepe,
+            sr=16000,
+            model_capacity='small',
+            step_size=5,
+            viterbi=False
         )
-    except:
+    except Exception:
         time = np.array([], dtype=np.float32)
         frequency = np.array([], dtype=np.float32)
         confidence = np.array([], dtype=np.float32)
 
-    # median pitch
-    if frequency.size and confidence.size:
+    if confidence.size:
         mask = confidence >= 0.2
-        f_masked = frequency[mask]
-        pitch_median = float(np.median(f_masked)) if f_masked.size else 0.0
-    else:
-        pitch_median = 0.0
+        time = time[mask]
+        frequency = frequency[mask]
+        confidence = confidence[mask]
 
-    return tempo, mfcc.astype(np.float32), chroma.astype(np.float32), \
-           time.astype(np.float32), frequency.astype(np.float32), confidence.astype(np.float32), pitch_median
+    pitch_median = float(np.median(frequency)) if frequency.size else 0.0
+
+    return (
+        tempo,
+        mfcc.astype(np.float32),
+        chroma.astype(np.float32),
+        time.astype(np.float32),
+        frequency.astype(np.float32),
+        confidence.astype(np.float32),
+        pitch_median
+    )
+
 
 
 def insert_audio_features(db_path, track_id, tempo, mfcc, chroma,
                           pitch_times=None, pitch_freqs=None, pitch_conf=None, pitch_median=0.0):
     conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
+    cur = conn.cursor() 
 
     cur.execute("""
         INSERT OR REPLACE INTO audio_features (

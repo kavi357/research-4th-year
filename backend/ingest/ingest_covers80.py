@@ -9,8 +9,6 @@ from .extract_embeddings import (
     extract_openl3_embedding, 
     extract_yamnet_embedding, 
     extract_fused_embedding,
-    insert_openl3_embedding,
-    insert_yamnet_embedding,
     insert_fused_embedding
 )
 
@@ -32,7 +30,7 @@ def insert_track(db, title, file_path, duration, dataset):
     return track_id
 
 
-def ingest_covers80(root_folder, max_songs=5):
+def ingest_covers80(root_folder, max_songs=10):
     root_folder = Path(root_folder)
     processed_count = 0
 
@@ -73,12 +71,7 @@ def ingest_covers80(root_folder, max_songs=5):
                                   pitch_times=pitch_times, pitch_freqs=pitch_freqs,
                                   pitch_conf=pitch_conf, pitch_median=pitch_median)
 
-            # --- EXTRACT EMBEDDINGS ---
-            openl3_emb = extract_openl3_embedding(y, sr)
-            insert_openl3_embedding(track_id, openl3_emb)
-
-            yamnet_emb = extract_yamnet_embedding(y, sr)
-            insert_yamnet_embedding(track_id, yamnet_emb)
+          
 
             fused_emb = extract_fused_embedding(y, sr)
             insert_fused_embedding(track_id, fused_emb)

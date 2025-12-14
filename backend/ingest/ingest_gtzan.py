@@ -30,7 +30,7 @@ def insert_track(db, title, file_path, duration, dataset):
     return track_id
 
 
-def ingest_gtzan(root_folder, max_songs=10):
+def ingest_gtzan(root_folder, max_songs=20):
     root_folder = Path(root_folder)
     processed_count = 0
 
@@ -76,7 +76,7 @@ def ingest_gtzan(root_folder, max_songs=10):
 
             fused_emb = extract_fused_embedding(y, sr)
             insert_fused_embedding(track_id, fused_emb)
-
+      
             processed_count += 1
             print(f"✓ Saved to DB: Track ID {track_id}")
 
