@@ -1,80 +1,91 @@
+import sqlite3
 import numpy as np
-import librosa
-import crepe
-from pathlib import Path
 
-# -----------------------------------------------
-# CONFIG
-# -----------------------------------------------
-AUDIO_PATH = r"D:\Music\test_song.mp3"   # ← CHANGE THIS TO YOUR AUDIO FILE
-MODEL_PATH = "models/crepe_small.keras"  # ← Your saved model
-MAX_SECONDS = 20                         # CREPE-safe limit
-TARGET_SR = 16000                        # CREPE requirement
-CONF_THRESHOLD = 0.2                     # Minimum confidence
-# -----------------------------------------------
+DB_PATH = "database/music.db"
 
+def load_all_embeddings():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
 
-def load_audio(path):
-    print(f"\nLoading audio: {path}")
-    y, sr = librosa.load(path, sr=None, mono=True)
+    cur.execute("SELECT track_id, embedding FROM embeddings ORDER BY track_id")
+    rows = cur.fetchall()
+    conn.close()
 
-    # Resample → 16 kHz
-    y_16k = librosa.resample(y, orig_sr=sr, target_sr=TARGET_SR)
-
-    # Trim if too long
-    max_samples = TARGET_SR * MAX_SECONDS
-    if len(y_16k) > max_samples:
-        y_16k = y_16k[:max_samples]
-
-    return y_16k.astype(np.float32), TARGET_SR
+    data = {}
+    for track_id, blob in rows:
+        data[track_id] = np.frombuffer(blob, dtype=np.float32)
+    return data
 
 
-def test_crepe(y, sr):
-    print("\nRunning CREPE pitch extraction...\n")
+def load_all_features():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
 
-    # Load your saved model
-    print("Loading saved CREPE model:", MODEL_PATH)
-    model = crepe.core.build_and_load_model(model_capacity='small')
-    model.load_weights(MODEL_PATH)
+    # Include tempo and CREPE pitch data
+    cur.execute("""
+        SELECT track_id, tempo, mfcc, chroma, pitch_times, pitch_freqs, pitch_conf, pitch_median
+        FROM audio_features
+        ORDER BY track_id
+    """)
+    rows = cur.fetchall()
+    conn.close()
 
-    # Run CREPE
-    time, frequency, confidence = crepe.predict(
-        audio=y,
-        sr=sr,
-        model_capacity='small',
-        step_size=10,
-        viterbi=True
-    )
+    data = {}
+    for tid, tempo, mfcc_blob, chroma_blob, pt_blob, pf_blob, pc_blob, pm in rows:
+        data[tid] = {
+            "tempo": float(tempo),
+            "mfcc": np.frombuffer(mfcc_blob, dtype=np.float32),
+            "chroma": np.frombuffer(chroma_blob, dtype=np.float32),
+            "pitch_times": np.frombuffer(pt_blob, dtype=np.float32) if pt_blob else np.array([], dtype=np.float32),
+            "pitch_freqs": np.frombuffer(pf_blob, dtype=np.float32) if pf_blob else np.array([], dtype=np.float32),
+            "pitch_conf": np.frombuffer(pc_blob, dtype=np.float32) if pc_blob else np.array([], dtype=np.float32),
+            "pitch_median": float(pm)
+        }
+    return data
 
-    print("CREPE returned:")
-    print("    time:", time.shape)
-    print("    frequency:", frequency.shape)
-    print("    confidence:", confidence.shape)
 
-    # Filter valid pitch
-    mask = confidence >= CONF_THRESHOLD
-    valid_freq = frequency[mask]
-
-    # Median pitch
-    pitch_median = float(np.median(valid_freq)) if valid_freq.size else 0.0
-
-    print("\n===== RESULTS =====")
-    print("Raw pitch count:", len(frequency))
-    print("Valid pitch (conf >= 0.2):", len(valid_freq))
-    print("Median pitch:", pitch_median)
-    print("====================\n")
-
-    # Print first few pitch values
-    print("Sample pitch values:")
-    for i in range(min(10, len(frequency))):
-        print(f"{i}: freq={frequency[i]:.2f}, conf={confidence[i]:.3f}")
-
-    return time, frequency, confidence, pitch_median
+def compare_vectors(v1, v2):
+    """Compare two vectors: check if they are close and compute L2 norm."""
+    return np.allclose(v1, v2), np.linalg.norm(v1 - v2)
 
 
 if __name__ == "__main__":
-    # Load audio
-    y, sr = load_audio(AUDIO_PATH)
+    print("🔍 Checking uniqueness of embeddings, audio features, tempo, and CREPE pitch…\n")
 
-    # Run CREPE
-    test_crepe(y, sr)
+    embeddings = load_all_embeddings()
+    features = load_all_features()
+
+    track_ids = list(embeddings.keys())
+
+    for i in range(len(track_ids)):
+        for j in range(i + 1, len(track_ids)):
+            t1, t2 = track_ids[i], track_ids[j]
+
+            # Compare embeddings
+            same_emb, emb_dist = compare_vectors(embeddings[t1], embeddings[t2])
+
+            # Compare MFCC
+            same_mfcc, mfcc_dist = compare_vectors(features[t1]["mfcc"], features[t2]["mfcc"])
+
+            # Compare Chroma
+            same_chroma, chroma_dist = compare_vectors(features[t1]["chroma"], features[t2]["chroma"])
+
+            # Compare tempo
+            same_tempo = features[t1]["tempo"] == features[t2]["tempo"]
+            tempo_diff = abs(features[t1]["tempo"] - features[t2]["tempo"])
+
+            # Compare CREPE pitch frequencies
+            same_pitch, pitch_dist = compare_vectors(features[t1]["pitch_freqs"], features[t2]["pitch_freqs"])
+
+            # Compare CREPE pitch median
+            same_pitch_median = features[t1]["pitch_median"] == features[t2]["pitch_median"]
+            pitch_median_diff = abs(features[t1]["pitch_median"] - features[t2]["pitch_median"])
+
+            print(f"Tracks {t1} vs {t2}:")
+            print(f"  ▶ Embeddings identical? {same_emb} | Distance = {emb_dist:.3f}")
+            print(f"  ▶ MFCC identical?       {same_mfcc} | Distance = {mfcc_dist:.3f}")
+            print(f"  ▶ Chroma identical?     {same_chroma} | Distance = {chroma_dist:.3f}")
+            print(f"  ▶ Tempo identical?      {same_tempo} | Diff = {tempo_diff:.3f}")
+            print(f"  ▶ CREPE pitch identical? {same_pitch} | Distance = {pitch_dist:.3f}")
+            print(f"  ▶ CREPE median identical? {same_pitch_median} | Diff = {pitch_median_diff:.3f}")
+            print("")

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rhythm Analysis</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body {
+  background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+}
+.glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+</style>
+</head>
+
+<body class="min-h-screen p-8 text-white">
+
+<div class="max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold mb-6">🥁 Rhythm Top-K Matches</h1>
+
+  <div id="list" class="space-y-4"></div>
+
+  <button onclick="back()"
+    class="mt-6 px-6 py-3 bg-red-600 rounded-lg font-bold">
+    ← Back
+  </button>
+</div>
+
+<script>
+const data = JSON.parse(localStorage.getItem("analysisData"));
+if (!data) location.href = "index.html";
+
+const list = document.getElementById("list");
+
+data.rhythm_analysis.top_k_matches.forEach((t, i) => {
+  const p = Math.round(t.rhythm_similarity * 100);
+
+  list.innerHTML += `
+    <div onclick="openDetail(${i})"
+         class="glass rounded-xl p-6 cursor-pointer hover:bg-white/10 transition">
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="text-xl font-bold">${i+1}. ${t.title}</p>
+          <p class="text-gray-400">
+            Shared motif length: ${t.shared_motif_length} beats
+          </p>
+          <p class="text-gray-400">
+            Fingerprint similarity: ${Math.round(t.fingerprint_similarity * 100)}%
+          </p>
+        </div>
+        <p class="text-3xl font-bold">${p}%</p>
+      </div>
+
+      <div class="w-full bg-gray-700 h-3 rounded mt-3">
+        <div class="bg-green-500 h-3 rounded" style="width:${p}%"></div>
+      </div>
+    </div>
+  `;
+});
+
+function openDetail(i) {
+  localStorage.setItem(
+    "selectedRhythm",
+    JSON.stringify(data.rhythm_analysis.top_k_matches[i])
+  );
+  window.location.href = "rhythm_detail.html";
+}
+
+function back() {
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

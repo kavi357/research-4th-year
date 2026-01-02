@@ -2,6 +2,8 @@
 
 import librosa
 import numpy as np
+import hashlib
+
 
 TARGET_SR = 48000
 TARGET_DURATION = 60.0  # seconds
@@ -30,3 +32,27 @@ def preprocess_audio(in_path):
     y_out = np.clip(y_out, -1.0, 1.0).astype(np.float32)
 
     return y_out, TARGET_DURATION, TARGET_SR
+
+
+
+
+def compute_audio_hash(chroma, tempo, duration):
+    """
+    Robust perceptual identity hash.
+    NOT used for similarity – only exact/near-exact identity.
+    """
+
+    # chroma shape: (12, T)
+    chroma_mean = chroma.mean(axis=1)
+
+    # Quantize for robustness
+    chroma_q = np.round(chroma_mean, 2)
+    tempo_q = round(float(tempo), 1)
+    duration_q = round(float(duration), 1)
+
+    payload = np.concatenate([
+        chroma_q,
+        np.array([tempo_q, duration_q], dtype=np.float32)
+    ])
+
+    return hashlib.sha1(payload.tobytes()).hexdigest()

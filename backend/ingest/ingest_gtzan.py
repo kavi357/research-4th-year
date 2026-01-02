@@ -24,13 +24,13 @@ def insert_track(db, title, file_path, duration, dataset):
         INSERT INTO tracks (title, file_path, duration, dataset)
         VALUES (?, ?, ?, ?)
     """, (title, file_path, duration, dataset))
-    conn.commit()
+    conn.commit() 
     track_id = cur.lastrowid
     conn.close()
     return track_id
 
 
-def ingest_gtzan(root_folder, max_songs=20):
+def ingest_gtzan(root_folder, max_songs= 20):
     root_folder = Path(root_folder)
     processed_count = 0
 

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Harmony Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white p-8">
+<h1 class="text-3xl font-bold mb-6">🎼 Harmonic Progression Alignment</h1>
+
+<div id="content" class="space-y-6"></div>
+
+<button onclick="goBack()"
+ class="mt-8 px-6 py-2 bg-purple-600 rounded-lg font-bold">
+⬅ Back
+</button>
+
+<script>
+const data = JSON.parse(localStorage.getItem("analysisData"));
+const container = document.getElementById("content");
+
+const harmony = data.harmony_analysis.best_match;
+
+if (!harmony) {
+    container.innerHTML = `
+      <p class="text-gray-400">
+        No significant harmonic alignment detected.
+      </p>
+    `;
+} else {
+    container.innerHTML = `
+      <div class="bg-white/10 p-6 rounded-xl space-y-8">
+        <div>
+          <h2 class="font-bold text-2xl mb-2">
+            🎯 Closest Harmonic Match
+          </h2>
+
+          <p class="text-lg font-semibold mb-1">
+            ${harmony.title}
+          </p>
+
+          <p class="text-sm text-gray-300 mb-4">
+            Harmonic similarity: 
+            <span class="font-bold text-green-400">
+              ${Math.round(harmony.harmony_similarity * 100)}%
+            </span><br>
+            Shared chord sequence length: ${harmony.shared_chords}
+            <p class="text-sm text-gray-400 mt-1">
+              Relative (key-invariant) harmony:
+              <span class="font-bold text-green-400">
+                ${Math.round(harmony.roman_similarity * 100)}%
+              </span>
+            </p>
+          </p>
+        </div>
+
+        <!-- ================= ABSOLUTE HARMONY ================= -->
+        <div>
+          <h3 class="font-semibold mb-1">Query Progression</h3>
+          <div class="flex gap-2 overflow-x-auto text-sm mb-3">
+            ${harmony.query_chords.map((c,i)=>`
+              <div class="px-2 py-1 rounded
+                ${harmony.alignment.some(a=>a.query_index===i)
+                  ? 'bg-green-600'
+                  : 'bg-gray-700'}">
+                ${c}
+              </div>
+            `).join("")}
+          </div>
+
+          <h3 class="font-semibold mb-1">Reference Progression</h3>
+          <div class="flex gap-2 overflow-x-auto text-sm">
+            ${harmony.db_chords.map((c,i)=>`
+              <div class="px-2 py-1 rounded
+                ${harmony.alignment.some(a=>a.db_index===i)
+                  ? 'bg-green-600'
+                  : 'bg-gray-700'}">
+                ${c}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <!-- ================= ROMAN (KEY-INVARIANT) ================= -->
+        <div>
+          <hr class="border-white/20">
+
+          <h2 class="font-bold text-xl mb-2 text-blue-400">
+            🔁 Relative (Key-Invariant) Harmony View
+          </h2>
+
+          <p class="text-sm text-gray-400 mb-4">
+            This view compares harmonic function (Roman numerals) instead of
+            exact chord names. Transpositions still align here.
+          </p>
+
+          <h3 class="font-semibold mb-1">Query (Roman)</h3>
+          <div class="flex gap-2 overflow-x-auto text-sm mb-4">
+            ${harmony.roman_query.map(r => `
+              <div class="px-2 py-1 rounded bg-blue-600/70">
+                ${r}
+              </div>
+            `).join("")}
+          </div>
+
+          <h3 class="font-semibold mb-1">Reference (Roman)</h3>
+          <div class="flex gap-2 overflow-x-auto text-sm">
+            ${harmony.roman_db.map(r => `
+              <div class="px-2 py-1 rounded bg-blue-600/70">
+                ${r}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <!-- ================= HARMONIC RARITY (NEW ADDITION) ================= -->
+        <div>
+          <hr class="border-white/20">
+
+          <h2 class="font-bold text-xl mb-2 text-emerald-400">
+            🧠 Harmonic Rarity (Corpus-Based)
+          </h2>
+
+          <p class="text-sm text-gray-400 mb-4">
+            This plot shows how rare the harmonic progressions of the query song
+            are, compared to a large music corpus.
+          </p>
+
+          <p class="mb-3">
+            Overall rarity score:
+            <span class="font-bold text-emerald-400">
+              ${Math.round(harmony.harmony_rarity.rarity_score * 100)}%
+            </span>
+          </p>
+
+          <div class="space-y-2">
+            ${harmony.harmony_rarity.ngrams.map((ng,i)=>`
+              <div class="flex items-center gap-3 text-sm">
+                <div class="w-48 text-gray-300 truncate">
+                  ${ng}
+                </div>
+
+                <div class="flex-1 bg-gray-700 rounded h-3 overflow-hidden">
+                  <div
+                    class="h-3 rounded
+                      ${harmony.harmony_rarity.frequencies[i] < 0.3
+                        ? 'bg-emerald-500'
+                        : harmony.harmony_rarity.frequencies[i] < 0.6
+                        ? 'bg-yellow-400'
+                        : 'bg-red-500'}"
+                    style="width:${Math.min(
+                      harmony.harmony_rarity.frequencies[i]*100,100)}%">
+                  </div>
+                </div>
+
+                <div class="w-12 text-right text-gray-400">
+                  ${Math.round(harmony.harmony_rarity.frequencies[i]*100)}%
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+      </div>
+    `;
+}
+
+function goBack(){
+    window.location.href = "index.html";
+}
+</script>
+</body>
+</html>

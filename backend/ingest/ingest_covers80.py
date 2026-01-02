@@ -3,6 +3,8 @@ import sqlite3
 import numpy as np
 from pathlib import Path
 
+from .preprocess import compute_audio_hash
+
 from .preprocess import preprocess_audio
 from .extract_features import extract_audio_features, insert_audio_features
 from .extract_embeddings import (
@@ -17,13 +19,15 @@ DB_PATH = Path(__file__).resolve().parents[2] / "database" / "music.db"
 DB_PATH = str(DB_PATH)
 
 
-def insert_track(db, title, file_path, duration, dataset):
+def insert_track(db, title, file_path, duration, dataset, audio_hash):
+
     conn = sqlite3.connect(db)
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO tracks (title, file_path, duration, dataset)
+        INSERT INTO tracks (title, file_path, duration, dataset, audio_hash)
         VALUES (?, ?, ?, ?)
-    """, (title, file_path, duration, dataset))
+    """, (title, file_path, duration, dataset, audio_hash))
+
     conn.commit()
     track_id = cur.lastrowid
     conn.close()
@@ -63,11 +67,13 @@ def ingest_covers80(root_folder, max_songs=10):
             y, duration, sr = preprocess_audio(file)
 
             # --- INSERT TRACK INTO DB ---
-            track_id = insert_track(DB_PATH, file.stem, str(file), duration, "covers80")
-
+            track_id = insert_track(DB_PATH, file.stem, str(file), duration, "covers80", audio_hash)
+    
             # --- EXTRACT AUDIO FEATURES ---
-            tempo, mfcc, chroma, pitch_times, pitch_freqs, pitch_conf, pitch_median = extract_audio_features(y, sr)
-            insert_audio_features(DB_PATH, track_id, tempo, mfcc, chroma,
+            tempo, mfcc, chroma, rhythm_pattern, pitch_times, pitch_freqs, pitch_conf, pitch_median = extract_audio_features(y, sr)
+            audio_hash = compute_audio_hash(chroma, tempo, duration)
+
+            insert_audio_features(DB_PATH, track_id, tempo, mfcc, chroma, rhythm_pattern, 
                                   pitch_times=pitch_times, pitch_freqs=pitch_freqs,
                                   pitch_conf=pitch_conf, pitch_median=pitch_median)
 

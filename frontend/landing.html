@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Analysis Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main container split view */
+        .main-wrapper {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Left side - Background with text */
+        .left-section {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+       .left-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 0, 0, 0.45) 0%,
+            rgba(10, 50, 30, 0.55) 100%
+        ),
+        url('../img/2.jpg') center center / cover no-repeat;
+    filter: contrast(1.1) saturate(1.15);
+}
+
+
+        .left-content {
+            position: relative;
+            z-index: 2;
+            text-align: left;
+            padding: 0 60px;
+            max-width: 650px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 50px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1db954, #1ed760);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 0 40px rgba(29, 185, 84, 0.7);
+            animation: logo-float 3s ease-in-out infinite;
+        }
+
+        @keyframes logo-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 900;
+            color: #d8ebde;
+            letter-spacing: 2px;
+        }
+
+        .hero-title {
+            font-size: 68px;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.1;
+            margin-bottom: 30px;
+            letter-spacing: -2px;
+        }
+
+        .hero-title .highlight {
+            color: #1db954;
+            display: block;
+            animation: text-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes text-glow {
+            0%, 100% { text-shadow: 0 0 30px rgba(29, 185, 84, 0.6); }
+            50% { text-shadow: 0 0 50px rgba(29, 185, 84, 0.9); }
+        }
+
+        .hero-subtitle {
+            font-size: 19px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.7;
+            margin-bottom: 50px;
+            font-weight: 400;
+        }
+
+        .hero-subtitle .green-text {
+            color: #1db954;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 60px;
+        }
+
+        .stat-box {
+            background: rgba(29, 185, 84, 0.12);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(29, 185, 84, 0.3);
+            border-radius: 20px;
+            padding: 25px 20px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        .stat-box:hover {
+            background: rgba(29, 185, 84, 0.25);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(29, 185, 84, 0.4);
+            border-color: #1db954;
+        }
+
+        .stat-number {
+            font-size: 42px;
+            font-weight: 900;
+            color: #1db954;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        /* Right side - Cards */
+        .right-section {
+            flex: 1;
+            background: #000000;
+            padding: 40px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(29, 185, 84, 0.08), transparent 70%);
+            animation: bg-rotate 25s ease-in-out infinite;
+        }
+
+        @keyframes bg-rotate {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-15%, 15%) rotate(180deg); }
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        /* Analysis Cards */
+        .analysis-card {
+            position: relative;
+            height: 280px;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+        }
+
+        .analysis-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(29, 185, 84, 0.4), transparent);
+            transition: left 0.7s;
+            z-index: 3;
+        }
+
+        .analysis-card:hover::before {
+            left: 100%;
+        }
+
+        .card-bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease, filter 0.5s ease;
+            z-index: 1;
+            filter: brightness(1) contrast(1.1) saturate(1.2);
+        }
+
+
+        .analysis-card.active .card-bg-video {
+            filter: brightness(0.9) contrast(1.15) saturate(1.2);
+        }
+
+        .analysis-card.disabled .card-bg-video {
+            filter: brightness(0.9) contrast(1.1) grayscale(0.2);
+        }
+
+        .card-glass-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.45) 0%,
+        rgba(10, 40, 25, 0.55) 100%
+    );
+    backdrop-filter: blur(1px);
+    border: 2px solid rgba(29, 185, 84, 0.25);
+    z-index: 2;
+    transition: all 0.4s ease;
+}
+
+
+        .analysis-card.active .card-glass-overlay {
+            background: linear-gradient(135deg, rgba(29, 185, 84, 0.25) 0%, rgba(0, 0, 0, 0.7) 100%);
+            border-color: rgba(29, 185, 84, 0.5);
+        }
+
+        .analysis-card:hover .card-glass-overlay {
+            border-color: #1db954;
+            background: linear-gradient(135deg, rgba(29, 185, 84, 0.35) 0%, rgba(0, 0, 0, 0.6) 100%);
+        }
+
+        .analysis-card.disabled {
+            cursor: not-allowed;
+        }
+
+        .analysis-card.disabled .card-glass-overlay {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 20, 0.85) 100%);
+            border-color: rgba(100, 100, 100, 0.3);
+        }
+
+        .analysis-card.disabled:hover .card-glass-overlay {
+            border-color: rgba(150, 150, 150, 0.4);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 4;
+            height: 100%;
+            padding: 25px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: rgba(29, 185, 84, 0.25);
+            border: 2px solid rgba(29, 185, 84, 0.6);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 25px rgba(29, 185, 84, 0.3);
+        }
+
+        .analysis-card:hover .card-icon-wrapper {
+            background: rgba(29, 185, 84, 0.45);
+            border-color: #1db954;
+            transform: scale(1.12) rotate(-8deg);
+            box-shadow: 0 8px 35px rgba(29, 185, 84, 0.5);
+        }
+
+        .card-badge {
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge-active {
+            background: linear-gradient(135deg, #1db954, #1ed760);
+            color: #000000;
+            box-shadow: 0 5px 25px rgba(29, 185, 84, 0.6);
+            animation: badge-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes badge-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .badge-soon {
+            background: rgba(100, 100, 100, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(150, 150, 150, 0.4);
+        }
+
+        .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .card-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.8);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+        }
+
+        /* Large main word */
+.title-main {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+/* Smaller stylish word */
+.title-sub {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(108, 236, 153, 0.9);
+}
+
+        .card-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9), 0 1px 6px rgba(0, 0, 0, 0.7);
+            font-weight: 500;
+        }
+
+        .card-features {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feature-pill {
+            background: rgba(29, 185, 84, 0.35);
+            border: 1px solid rgba(29, 185, 84, 0.6);
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #ffffff;
+            font-weight: 700;
+            backdrop-filter: blur(8px);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .analysis-card:hover .feature-pill {
+            background: rgba(29, 185, 84, 0.5);
+            border-color: #1db954;
+            transform: translateY(-2px);
+        }
+
+        .analysis-card.disabled .feature-pill {
+            background: rgba(100, 100, 100, 0.25);
+            border-color: rgba(150, 150, 150, 0.4);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 25px;
+            right: 28px;
+            width: 45px;
+            height: 45px;
+            background: rgba(29, 185, 84, 0.35);
+            border: 2px solid rgba(29, 185, 84, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #1db954;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .analysis-card.active:hover .card-arrow {
+            background: #1db954;
+            color: #000000;
+            transform: translateX(8px);
+            box-shadow: 0 8px 30px rgba(29, 185, 84, 0.6);
+        }
+
+        .analysis-card.disabled .card-arrow {
+            background: rgba(100, 100, 100, 0.3);
+            border-color: rgba(150, 150, 150, 0.4);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Floating particles - Right side only */
+        .particles-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particles-right {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(29, 185, 84, 0.5), transparent);
+            border-radius: 50%;
+            animation: float-particle 30s infinite ease-in-out;
+        }
+
+        .particle-left {
+            position: absolute;
+            background: radial-gradient(circle, rgba(29, 185, 84, 0.3), transparent);
+            border-radius: 50%;
+            animation: float-particle-left 35s infinite ease-in-out;
+        }
+
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+            33% { transform: translate(180px, -180px) scale(1.5); opacity: 0.8; }
+            66% { transform: translate(-180px, 180px) scale(0.9); opacity: 0.6; }
+        }
+
+        @keyframes float-particle-left {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            50% { transform: translate(50px, -50px) scale(1.1); opacity: 0.3; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-wrapper {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .left-section {
+                min-height: 60vh;
+            }
+
+            .right-section {
+                min-height: 50vh;
+                padding: 30px;
+            }
+
+            .hero-title {
+                font-size: 52px;
+            }
+
+            .analysis-card {
+                height: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 42px;
+            }
+
+            .stats-grid {
+                gap: 15px;
+            }
+
+            .stat-number {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Left Section - Background with Text -->
+        <div class="left-section">
+            <div class="left-bg"></div>
+            
+            <!-- Few particles for left side -->
+            <div class="particles-left" id="particles-left"></div>
+            
+            <div class="left-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🎧</div>
+
+                    <div class="logo-text">Copyright Similarity Analysis</div>
+                </div>
+
+                <h1 class="hero-title">
+                    AI-Powered
+                    <span class="highlight">Music</span>
+                    Analysis
+                </h1>
+
+                <p class="hero-subtitle">
+                    Leverage cutting-edge <span class="green-text">artificial intelligence</span> to 
+                    analyze, compare, and understand your music tracks with unprecedented 
+                    <span class="green-text">precision and speed</span>.
+                </p>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Tracks</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">&lt;2s</div>
+                        <div class="stat-label">Speed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Cards -->
+        <div class="right-section">
+            <!-- Many particles for right side -->
+            <div class="particles-right" id="particles-right"></div>
+            
+            <div class="section-header">
+                <h2 class="section-title">Choose Your Analysis</h2>
+                <p class="section-subtitle">Select a feature to get started</p>
+            </div>
+
+            <!-- Similarity Analysis Card -->
+            <div class="analysis-card active" onclick="navigateToSimilarity()">
+                <video class="card-bg-video" autoplay loop muted playsinline>
+                    <source src="../img/2.mp4" type="video/mp4">
+                    <source src="../img/video1.webm" type="video/webm">
+                </video>
+                <div class="card-glass-overlay"></div>
+                
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="card-icon-wrapper">🎼</div>
+                        <div class="card-badge badge-active">Available Now</div>
+                    </div>
+
+                    <div class="card-body">
+                        <h3 class="card-title">
+    <span class="title-main">Similarity</span>
+    <span class="title-sub">Analysis</span>
+</h3>
+
+                        <p class="card-description">
+                            Compare your tracks & Analyse 
+                        </p>
+                        <div class="card-features">
+                            <span class="feature-pill">Tempo Match</span>
+                            <span class="feature-pill">Pitch Analysis</span>
+                            <span class="feature-pill">AI Detection</span>
+                        </div>
+                    </div>
+
+                    <div class="card-arrow">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Level Analysis Card -->
+            <div class="analysis-card disabled">
+                <video class="card-bg-video" autoplay loop muted playsinline>
+                    <source src="../img/3.mp4" type="video/mp4">
+                    <source src="../img/video2.webm" type="video/webm">
+                </video>-
+                <div class="card-glass-overlay"></div>
+                
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="card-icon-wrapper">📊</div>
+                        <div class="card-badge badge-soon">Coming Soon</div>
+                    </div>
+
+                    <div class="card-body">
+                        <h3 class="card-title">
+    <span class="title-main">Segment</span>
+    <span class="title-sub">Analysis</span>
+</h3>
+
+                        <p class="card-description">
+                            Break down tracks into segments
+                        </p>
+                        <div class="card-features">
+                            <span class="feature-pill">Structure Detect</span>
+                            <span class="feature-pill">Energy Map</span>
+                            <span class="feature-pill">Timeline</span>
+                        </div>
+                    </div>
+
+                    <div class="card-arrow">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Create floating particles for LEFT side (few particles)
+        function createLeftParticles() {
+            const container = document.getElementById('particles-left');
+            const particleCount = 5; // Only 5 particles for left
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle-left';
+                
+                const size = Math.random() * 100 + 60;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 35 + 's';
+                particle.style.animationDuration = (Math.random() * 45 + 30) + 's';
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // Create floating particles for RIGHT side (many particles)
+        function createRightParticles() {
+            const container = document.getElementById('particles-right');
+            const particleCount = 25; // 25 particles for right side
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 160 + 80;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 30 + 's';
+                particle.style.animationDuration = (Math.random() * 40 + 25) + 's';
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // Navigate to similarity analysis
+        function navigateToSimilarity() {
+            document.body.style.transition = 'opacity 0.4s ease-out';
+            document.body.style.opacity = '0';
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 400);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createLeftParticles();
+            createRightParticles();
+        });
+    </script>
+</body>
+</html>

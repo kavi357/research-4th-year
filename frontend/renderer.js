@@ -30,11 +30,11 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
             p.innerText = stem.name;
 
             const audio = document.createElement("audio");
-            audio.controls = true;
+            audio.controls = true; 
             audio.src = "http://127.0.0.1:8000" + stem.url;
 
-            stemsDiv.appendChild(p);
-            stemsDiv.appendChild(audio);
+            stemsDiv.appendChild(p); 
+            stemsDiv.appendChild(audio); 
         });
 
     } catch (err) {

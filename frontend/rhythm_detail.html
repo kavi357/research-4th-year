@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rhythm Comparison</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+
+<style>
+body {
+  background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+}
+.glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+</style>
+</head>
+
+<body class="min-h-screen p-8 text-white">
+
+<!-- Back -->
+<button onclick="goBack()"
+  class="mb-6 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">
+  ← Back to Rhythm Results
+</button>
+
+<h1 id="title" class="text-3xl font-bold mb-2"></h1>
+<p class="text-slate-400 mb-8">
+  Comparative analysis of rhythmic structure using non-protectable rhythm descriptors
+</p>
+
+<!-- ============================= -->
+<!-- SUMMARY -->
+<!-- ============================= -->
+<div class="glass rounded-xl p-6 mb-10">
+  <div class="grid grid-cols-3 gap-6 text-center">
+    <div>
+      <p class="text-gray-400">Overall Similarity</p>
+      <p id="overall" class="text-4xl font-bold"></p>
+    </div>
+    <div>
+      <p class="text-gray-400">Fingerprint Similarity</p>
+      <p id="fp" class="text-3xl font-bold"></p>
+    </div>
+    <div>
+      <p class="text-gray-400">Shared Motif</p>
+      <p id="motif" class="text-3xl font-bold"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- RHYTHM RADAR CHART (NEW) -->
+<!-- ============================= -->
+<div class="glass rounded-xl p-6 mb-10">
+  <h2 class="text-xl font-semibold mb-2">
+    Rhythm Feature Radar
+  </h2>
+  <p class="text-slate-400 text-sm mb-4">
+    Overall rhythmic feel comparison using weak, non-protectable features
+  </p>
+  <div id="radarChart" class="w-full h-[420px]"></div>
+</div>
+
+<!-- ============================= -->
+<!-- FEATURE BAR CHART -->
+<!-- ============================= -->
+<div class="glass rounded-xl p-6 mb-10">
+  <h2 class="text-xl font-semibold mb-4">Per-Feature Similarity</h2>
+  <div id="featureChart" class="w-full h-[360px]"></div>
+</div>
+
+<!-- ============================= -->
+<!-- INTERPRETATION -->
+<!-- ============================= -->
+<div class="glass rounded-xl p-6">
+  <h2 class="text-xl font-semibold mb-3">Interpretation</h2>
+  <ul class="list-disc list-inside text-slate-300 text-sm space-y-2">
+    <li>Radar shape similarity reflects rhythmic resemblance</li>
+    <li>Features describe tempo, beat spacing, and onset energy</li>
+    <li>These statistics do <b>not</b> imply copying</li>
+  </ul>
+</div>
+
+<script>
+function goBack() {
+  window.location.href = "rhythm.html";
+}
+
+const d = JSON.parse(localStorage.getItem("selectedRhythm"));
+if (!d) {
+  alert("No rhythm data found");
+  throw new Error("selectedRhythm missing");
+}
+
+// =============================
+// SUMMARY
+// =============================
+document.getElementById("title").innerText =
+  `${d.title} — Rhythm Similarity ${Math.round(d.rhythm_similarity * 100)}%`;
+
+document.getElementById("overall").innerText =
+  Math.round(d.rhythm_similarity * 100) + "%";
+
+document.getElementById("fp").innerText =
+  Math.round(d.fingerprint_similarity * 100) + "%";
+
+document.getElementById("motif").innerText =
+  d.shared_motif_length + " beats";
+
+// =============================
+// RADAR CHART
+// =============================
+const radarLabels = [
+  "Tempo",
+  "Mean IBI",
+  "IBI Variability",
+  "Beat Density",
+  "Mean Onset",
+  "Onset Variability"
+];
+
+// Query = reference (100%)
+const queryValues = [100,100,100,100,100,100];
+
+// DB similarity values
+const dbValues = [
+  d.feature_similarity.tempo,
+  d.feature_similarity.mean_ibi,
+  d.feature_similarity.std_ibi,
+  d.feature_similarity.beat_density,
+  d.feature_similarity.mean_onset,
+  d.feature_similarity.std_onset
+].map(v => Math.round(v * 100));
+
+Plotly.newPlot("radarChart", [
+  {
+    type: "scatterpolar",
+    r: queryValues,
+    theta: radarLabels,
+    fill: "toself",
+    name: "Query song",
+    opacity: 0.35
+  },
+  {
+    type: "scatterpolar",
+    r: dbValues,
+    theta: radarLabels,
+    fill: "toself",
+    name: "Matched song",
+    opacity: 0.55
+  }
+], {
+  polar: {
+    radialaxis: {
+      visible: true,
+      range: [0, 100]
+    }
+  },
+  showlegend: true,
+  paper_bgcolor: "rgba(0,0,0,0)",
+  font: { color: "#ffffff" },
+  margin: { t: 20 }
+});
+
+// =============================
+// FEATURE BAR CHART
+// =============================
+Plotly.newPlot("featureChart", [{
+  x: radarLabels,
+  y: dbValues,
+  type: "bar"
+}], {
+  yaxis: { title: "Similarity (%)", range: [0,100] },
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor: "rgba(0,0,0,0)",
+  font: { color: "#ffffff" },
+  margin: { t: 30 }
+});
+</script>
+
+</body>
+</html>

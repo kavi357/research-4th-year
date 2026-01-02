@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Melody Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white p-8">
+
+<h1 class="text-3xl font-bold mb-6">🎵 Melody Top-K Matches</h1>
+
+<!-- ✅ BACK BUTTON (ADDED HERE) -->
+<button onclick="goBack()"
+        class="mb-6 px-5 py-2 bg-purple-600 rounded-lg font-bold hover:bg-purple-700">
+    ← Back to Main Analysis
+</button>
+
+<div id="list" class="space-y-4"></div>
+
+<script>
+const data = JSON.parse(localStorage.getItem("analysisData"));
+const list = document.getElementById("list");
+
+data.melody_analysis.top_k_matches.forEach((m, i) => {
+    list.innerHTML += `
+      <div onclick="openDetail(${i})"
+           class="p-5 bg-white/10 rounded-xl cursor-pointer hover:bg-white/20">
+        <p class="font-bold">${i+1}. ${m.title}</p>
+        <p>Similarity: ${Math.round(m.melody_similarity * 100)}%</p>
+        <p>Shared notes: ${m.shared_motif_notes}</p>
+      </div>
+    `;
+});
+
+function openDetail(i){
+    localStorage.setItem(
+      "selectedMelody",
+      JSON.stringify(data.melody_contours[i])
+    );
+    window.location.href = "melody_detail.html";
+}
+
+/* ✅ BACK NAVIGATION */
+function goBack() {
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

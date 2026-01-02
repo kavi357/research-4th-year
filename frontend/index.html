@@ -1,68 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Music Similarity Checker</title>
+<meta charset="UTF-8">
+<title>Music Copyright Similarity</title>
 
-    <!-- TailwindCSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #1e1e2f, #12121a);
-            font-family: 'Inter', sans-serif;
-        }
-        .card-bg {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-        }
-        .result-box {
-            max-height: 300px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-    </style>
+<style>
+body {
+    background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+}
+.glass {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+</style>
 </head>
 
-<body class="flex justify-center items-center h-screen text-white">
+<body class="min-h-screen flex items-center justify-center text-white p-6">
 
-<div class="w-[550px] card-bg rounded-xl shadow-xl p-8">
+<div class="w-full max-w-xl glass rounded-xl p-8 text-center">
 
-    <h1 class="text-3xl font-bold mb-4 text-center">
-        🎵 Music Similarity Checker
-    </h1>
+    <h1 class="text-3xl font-bold mb-6">🎶 Music Copyright Similarity</h1>
 
-    <p class="text-gray-300 text-sm mb-6 text-center">
-        Upload an audio file and analyze originality using your AI-powered backend.
-    </p>
+    <input type="file" id="audioFile" class="mb-4 w-full text-gray-300">
 
-    <!-- Upload Section -->
-    <div class="flex flex-col items-center">
-        <input
-            type="file"
-            id="audioFile"
-            accept="audio/*"
-            class="block w-full text-sm text-gray-300 mb-4
-                   file:mr-4 file:py-2 file:px-4
-                   file:rounded-lg file:border-0
-                   file:text-sm file:font-semibold
-                   file:bg-purple-600 file:text-white
-                   hover:file:bg-purple-700"
-        />
+    <button onclick="analyze()"
+        class="w-full py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-700">
+        Analyze
+    </button>
 
-        <button
-            onclick="uploadSong()"
-            class="bg-purple-500 hover:bg-purple-600 w-full py-2 rounded-lg font-semibold transition">
-            Analyze Song
+    <!-- RESULTS -->
+    <div id="result" class="hidden mt-6 space-y-6">
+
+        <!-- FUSED EMBEDDING -->
+        <div class="border-b border-white/20 pb-4">
+            <h2 class="text-xl font-bold">Fused Embedding Similarity</h2>
+            <p class="text-gray-400 mt-2">Most Similar DB Song</p>
+
+            <p id="fusedSongTitle" class="text-lg font-semibold mt-1">–</p>
+
+            <p class="mt-2">Similarity</p>
+            <p id="fusedScore" class="text-4xl font-bold">0%</p>
+        </div>
+
+        <!-- RHYTHM -->
+        <div>
+            <h2 class="text-xl font-bold">Rhythm Analysis</h2>
+            <p class="text-gray-400 mt-2">Overall Rhythm Similarity</p>
+            <p id="rhythmScore" class="text-4xl font-bold">0%</p>
+            <p class="mt-2">Risk Level</p>
+            <p id="rhythmRisk" class="text-2xl font-bold">–</p>
+
+            <button onclick="goRhythmDetails()"
+                class="mt-4 px-6 py-2 bg-green-600 rounded-lg font-bold">
+                Deep Rhythm Analysis →
+            </button>
+        </div>
+
+        <!-- MELODY -->
+        <div>
+            <h2 class="text-xl font-bold">Melody Analysis</h2>
+            <p class="text-gray-400 mt-2">Overall Melody Similarity</p>
+            <p id="melodyScore" class="text-4xl font-bold">0%</p>
+            <p class="mt-2">Risk Level</p>
+            <p id="melodyRisk" class="text-2xl font-bold">–</p>
+
+            <button onclick="goMelodyDetails()"
+                class="mt-4 px-6 py-2 bg-green-600 rounded-lg font-bold">
+                Deep Melody Analysis →
+            </button>
+        </div>
+
+        <!-- HARMONY -->
+        <div>
+            <h2 class="text-xl font-bold">Harmony Analysis</h2>
+            <p class="text-gray-400 mt-2">Overall Harmony Similarity</p>
+            <p id="harmonyScore" class="text-4xl font-bold">0%</p>
+            <p class="mt-2">Risk Level</p>
+            <p id="harmonyRisk" class="text-2xl font-bold">–</p>
+
+            <button onclick="goHarmonyDetails()"
+                class="mt-4 px-6 py-2 bg-green-600 rounded-lg font-bold">
+                Deep Harmonic Analysis →
+            </button>
+        </div>
+
+        <!-- FINAL DECISION -->
+        <div class="border-t border-white/20 pt-4">
+            <h2 class="text-xl font-bold">Final Decision</h2>
+            <p class="text-gray-400 mt-2">Overall Similarity Score</p>
+            <p id="finalScore" class="text-4xl font-bold">0%</p>
+            <p class="mt-2">Risk Level</p>
+            <p id="finalRisk" class="text-2xl font-bold">–</p>
+        </div>
+
+        <!-- 🔴 CLEAR ANALYSIS -->
+        <button onclick="clearAnalysis()"
+            class="mt-6 w-full py-3 bg-red-600 rounded-lg font-bold hover:bg-red-700">
+            Clear Analysis
         </button>
+
+
     </div>
-
-    <!-- Results -->
-    <h3 class="text-xl font-semibold mt-6 mb-2">🔍 Results</h3>
-    <pre id="resultBox" class="result-box text-green-300 text-sm p-4 bg-black/40 rounded-lg"></pre>
-
 </div>
 
-<script src="renderer.js"></script>
+<script>
+async function analyze() {
+    const f = document.getElementById("audioFile").files[0];
+    if (!f) {
+        alert("Select an audio file");
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    let d;
+    try {
+        const r = await fetch("http://127.0.0.1:8000/analyze", {
+            method: "POST",
+            body: fd
+        });
+        d = await r.json();
+    } catch (e) {
+        alert("Backend not reachable");
+        return;
+    }
+
+    if (d.status !== "success") {
+        alert("Analysis failed");
+        return;
+    }
+
+    localStorage.setItem("analysisData", JSON.stringify(d));
+    renderResults(d);
+}
+
+function renderResults(d) {
+    document.getElementById("result").classList.remove("hidden");
+
+    document.getElementById("fusedSongTitle").innerText =
+        d.fused_embedding_top?.title || "Unknown";
+    document.getElementById("fusedScore").innerText =
+        Math.round((d.fused_embedding_top?.similarity || 0) * 100) + "%";
+
+    document.getElementById("rhythmScore").innerText =
+        Math.round((d.rhythm_summary?.overall_similarity || 0) * 100) + "%";
+    document.getElementById("rhythmRisk").innerText =
+        d.rhythm_summary?.risk_level || "–";
+
+    document.getElementById("melodyScore").innerText =
+        Math.round((d.melody_summary?.overall_similarity || 0) * 100) + "%";
+    document.getElementById("melodyRisk").innerText =
+        d.melody_summary?.risk_level || "–";
+
+    document.getElementById("harmonyScore").innerText =
+        Math.round((d.harmony_summary?.overall_similarity || 0) * 100) + "%";
+    document.getElementById("harmonyRisk").innerText =
+        d.harmony_summary?.risk_level || "–";
+
+    document.getElementById("finalScore").innerText =
+        Math.round((d.final_decision?.score || 0) * 100) + "%";
+    document.getElementById("finalRisk").innerText =
+        d.final_decision?.risk_level || "–";
+}
+
+function goRhythmDetails() {
+    window.location.href = "rhythm.html";
+}
+
+function goMelodyDetails() {
+    window.location.href = "melody.html";
+}
+
+function clearAnalysis() {
+    localStorage.removeItem("analysisData");
+    location.reload();
+}
+
+function goHarmonyDetails() {
+    window.location.href = "harmony.html";
+}
+
+/* ✅ RESTORE STATE WHEN COMING BACK */
+window.addEventListener("DOMContentLoaded", () => {
+    const saved = localStorage.getItem("analysisData");
+    if (saved) {
+        renderResults(JSON.parse(saved));
+    }
+});
+</script>
+
 </body>
 </html>

@@ -15,10 +15,10 @@ def count_tracks():
     print(f"🎵 Total tracks in database: {total}")
 
     # Optional: list track IDs and titles
-    cur.execute("SELECT id, title FROM tracks ORDER BY id")
-    rows = cur.fetchall()
-    for track_id, title in rows:
-        print(f"  ID={track_id} → {title}")
+   # cur.execute("SELECT id, title FROM tracks ORDER BY id")
+   # rows = cur.fetchall()
+   # for track_id, title in rows:
+ #       print(f"  ID={track_id} → {title}")
 
     conn.close()
 

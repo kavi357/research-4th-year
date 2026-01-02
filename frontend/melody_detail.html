@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Melody Comparison</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white min-h-screen p-8">
+
+  <!-- 🔙 Back Button -->
+  <button
+    onclick="goBack()"
+    class="mb-6 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition"
+  >
+    ← Back to Melody Results
+  </button>
+
+  <!-- 🎵 Title -->
+  <h1 class="text-3xl font-bold mb-2" id="title"></h1>
+  <p class="text-slate-400 mb-8">
+    Visual comparison of melodic contours, segment similarity, and detected motifs
+  </p>
+
+  <!-- ===================== -->
+  <!-- 🎼 MELODY CONTOUR -->
+  <!-- ===================== -->
+  <div class="bg-slate-800 rounded-xl p-4 shadow-lg mb-12">
+    <h2 class="text-xl font-semibold mb-3">
+      Melody Contour Comparison
+    </h2>
+    <div id="chart" class="w-full h-[500px]"></div>
+  </div>
+
+  <!-- ===================== -->
+  <!-- ⏱️ TIMELINE SIMILARITY -->
+  <!-- ===================== -->
+  <div class="bg-slate-800 rounded-xl p-4 shadow-lg mb-12">
+    <h2 class="text-xl font-semibold mb-2">
+      Timeline Similarity
+    </h2>
+    <p class="text-slate-400 text-sm mb-2">
+      Segment-wise melodic similarity (window = 8 notes)
+    </p>
+
+    <!-- ✅ Color legend -->
+    <div class="flex gap-4 text-sm text-slate-300 mb-4">
+      <span class="flex items-center gap-2">
+        <span class="w-3 h-3 bg-red-500 rounded"></span>
+        Strong (≥ 80%)
+      </span>
+      <span class="flex items-center gap-2">
+        <span class="w-3 h-3 bg-amber-500 rounded"></span>
+        Moderate (60–79%)
+      </span>
+      <span class="flex items-center gap-2">
+        <span class="w-3 h-3 bg-cyan-400 rounded"></span>
+        Weak (&lt; 60%)
+      </span>
+    </div>
+
+    <div id="timeline" class="w-full h-[280px]"></div>
+  </div>
+
+  <!-- ===================== -->
+  <!-- 🔥 MELODY HEATMAP -->
+  <!-- ===================== -->
+  <div class="bg-slate-800 rounded-xl p-4 shadow-lg">
+    <h2 class="text-xl font-semibold mb-3">
+      Melody Similarity Heatmap
+    </h2>
+    <p class="text-slate-400 text-sm mb-4">
+      Bright diagonal regions indicate strong melodic alignment
+    </p>
+    <div id="heatmap" class="w-full h-[450px]"></div>
+  </div>
+
+  <!-- ===================== -->
+  <!-- 📜 SCRIPT -->
+  <!-- ===================== -->
+  <script>
+    function goBack() {
+      window.location.href = "melody.html";
+    }
+
+    const d = JSON.parse(localStorage.getItem("selectedMelody"));
+
+    if (!d) {
+      alert("No melody data found");
+      throw new Error("selectedMelody missing");
+    }
+
+    // ---------- TITLE ----------
+    document.getElementById("title").innerText =
+      `${d.title} — Melody Similarity ${Math.round(d.similarity * 100)}%`;
+
+    // ======================================================
+    // 🎼 MELODY CONTOUR
+    // ======================================================
+    const traces = [
+      {
+        x: d.query.time,
+        y: d.query.pitch,
+        mode: "lines",
+        name: "Uploaded Song",
+        line: { width: 2 }
+      },
+      {
+        x: d.db_song.time,
+        y: d.db_song.pitch,
+        mode: "lines",
+        name: d.title,
+        line: { width: 2 }
+      }
+    ];
+
+    if (d.motif && d.motif.query && d.motif.db && d.motif.query[0] !== null) {
+      const [qStart, qEnd] = d.motif.query;
+      const [dStart, dEnd] = d.motif.db;
+
+      traces.push({
+        x: d.query.time.slice(qStart, qEnd + 1),
+        y: d.query.pitch.slice(qStart, qEnd + 1),
+        mode: "lines+markers",
+        name: "Shared Motif (Query)",
+        line: { width: 5, color: "#22d3ee" },
+        marker: { size: 6 }
+      });
+
+      traces.push({
+        x: d.db_song.time.slice(dStart, dEnd + 1),
+        y: d.db_song.pitch.slice(dStart, dEnd + 1),
+        mode: "lines+markers",
+        name: "Shared Motif (DB)",
+        line: { width: 5, color: "#a855f7" },
+        marker: { size: 6 }
+      });
+    }
+
+    Plotly.newPlot("chart", traces, {
+      xaxis: { title: "Time (frames)" },
+      yaxis: { title: "Pitch (MIDI)" },
+      paper_bgcolor: "#0f172a",
+      plot_bgcolor: "#0f172a",
+      font: { color: "#ffffff" },
+      legend: { orientation: "h", y: -0.2 }
+    });
+
+    // ======================================================
+    // ⏱️ TIMELINE SIMILARITY (ENHANCED)
+    // ======================================================
+    if (
+      d.timeline_similarity &&
+      Array.isArray(d.timeline_similarity.similarities) &&
+      d.timeline_similarity.similarities.length > 0
+    ) {
+      const sims = d.timeline_similarity.similarities.map(v => v * 100);
+
+      // Detect continuous strong similarity regions
+      const strongRegions = [];
+      let start = null;
+
+      sims.forEach((v, i) => {
+        if (v >= 80) {
+          if (start === null) start = i;
+        } else {
+          if (start !== null && i - start >= 2) {
+            strongRegions.push([start, i - 1]);
+          }
+          start = null;
+        }
+      });
+
+      if (start !== null && sims.length - start >= 2) {
+        strongRegions.push([start, sims.length - 1]);
+      }
+
+      const shapes = strongRegions.map(([s, e]) => ({
+        type: "rect",
+        xref: "x",
+        yref: "paper",
+        x0: `Seg ${s + 1}`,
+        x1: `Seg ${e + 1}`,
+        y0: 0,
+        y1: 1,
+        fillcolor: "rgba(239,68,68,0.15)",
+        line: { width: 0 }
+      }));
+
+      Plotly.newPlot("timeline", [{
+        x: sims.map((_, i) => `Seg ${i + 1}`),
+        y: sims,
+        type: "bar",
+        marker: {
+          color: sims.map(v =>
+            v >= 80 ? "#ef4444" :
+            v >= 60 ? "#f59e0b" :
+                      "#22d3ee"
+          )
+        }
+      }], {
+        yaxis: { title: "Similarity (%)", range: [0, 100] },
+        xaxis: { title: "Melody Segment" },
+        shapes: shapes,
+        paper_bgcolor: "#0f172a",
+        plot_bgcolor: "#0f172a",
+        font: { color: "#ffffff" }
+      });
+    } else {
+      document.getElementById("timeline").innerHTML =
+        "<p class='text-slate-400 text-sm'>Timeline similarity not available.</p>";
+    }
+
+    // ======================================================
+    // 🔥 HEATMAP
+    // ======================================================
+    if (d.heatmap && d.motif && d.motif.query && d.motif.db) {
+      const [qStart, qEnd] = d.motif.query;
+      const [dStart, dEnd] = d.motif.db;
+
+      Plotly.newPlot("heatmap", [{
+        z: d.heatmap,
+        type: "heatmap",
+        colorscale: "Hot",
+        colorbar: { title: "Similarity" }
+      }], {
+        xaxis: { title: "Query Melody (note index)" },
+        yaxis: { title: "Database Melody (note index)" },
+        paper_bgcolor: "#0f172a",
+        plot_bgcolor: "#0f172a",
+        font: { color: "#ffffff" },
+        shapes: [{
+          type: "rect",
+          x0: qStart,
+          x1: qEnd,
+          y0: dStart,
+          y1: dEnd,
+          line: { color: "cyan", width: 3 },
+          fillcolor: "rgba(0,255,255,0.1)"
+        }]
+      });
+    } else {
+      document.getElementById("heatmap").innerHTML =
+        "<p class='text-slate-400 text-sm'>Heatmap not available.</p>";
+    }
+  </script>
+
+</body>
+</html>
